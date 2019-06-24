@@ -111,7 +111,7 @@ def submit_job(package_uris):
   try:
     response = request.execute()
     logging.info(response)
-    print('\nTo stream logs run: gcloud ml-engine jobs stream-logs %s\n'
+    print('\nTo stream logs run: gcloud ai-platform jobs stream-logs %s\n'
           % JOB_NAME)
   except errors.HttpError as err:
     # Something went wrong, print out some information.
