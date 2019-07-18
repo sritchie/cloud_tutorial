@@ -42,7 +42,8 @@ gcloud ai-platform jobs submit training $JOB_NAME \
 gcloud ai-platform jobs stream-logs $JOB_NAME
 ```
 
-To submit a gpu job run:
+To submit a gpu job, first delete tensorflow from the REQUIRED_PACKAGES line in
+ setup.py. Then run:
 
 ```bash
 JOB_NAME='MNIST_training_gpu'
