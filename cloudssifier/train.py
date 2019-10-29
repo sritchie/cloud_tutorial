@@ -11,6 +11,7 @@ from absl import logging
 import numpy as np
 
 import tensorflow as tf
+import tensorflow.compat.v1 as tf_old
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.layers import Dense
@@ -38,7 +39,7 @@ def get_mnist(data_path):
     data - Tuple of tuples, consisting of formatted train and test data.
   """
   logging.info('Attempting to get data from %s' % data_path)
-  with tf.io.gfile.GFile(data_path, mode='rb') as f:
+  with tf_old.gfile.GFile(data_path, mode='rb') as f:
     data = np.load(f)
 
   x_train, y_train_cold = data['x_train'], data['y_train']
