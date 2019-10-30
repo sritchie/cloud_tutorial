@@ -162,8 +162,8 @@ gcloud ai-platform jobs submit training $JOB_NAME \
   --runtime-version 1.14 \
   --python-version 3.5 \
   -- \
-  --data_path=$DATA_PATH \
-  --job_name=$JOB_NAME
+  --data_path $DATA_PATH \
+  --job_name $JOB_NAME
 ```
 
 You'll be able to see your job running at the
@@ -190,7 +190,7 @@ Proof achieved!
 ## Submit a GPU job
 
 The GPU training code is the same - the only difference is the cloud environment
-in which the job executes.
+in which the job executes. The GPU environment installs the
 
 For the GPU job you will need to make sure you have quota in `$REGION`. The
 following example executes with P100 GPUs.
@@ -205,17 +205,32 @@ gcloud ai-platform jobs submit training $JOB_NAME \
   --job-dir $JOB_DIR \
   --staging-bucket gs://$BUCKET_NAME \
   --module-name cloudssifier.train \
-  --package-path cloudssifier/ \
+  --package-path cloudssifier \
   --region $REGION\
   --scale-tier custom \
   --master-machine-type standard_p100 \
   --runtime-version 1.14 \
   --python-version 3.5 \
   -- \
-  --data_path=$DATA_PATH
+  --data_path $DATA_PATH \
+  --job_name $JOB_NAME
+```
 
+As before, you can stream the output of the logs with this command:
+
+```bash
 gcloud ai-platform jobs stream-logs $JOB_NAME
 ```
+
+You can reload Tensorboard to see the new GPU model run, and verify that GPUs
+were used by:
+
+1.  Clicking on the "Graphs" menu item at the top of the screen
+2.  Selecting your GPU run from the "Runs" dropdown on the left
+3.  Clicking "Device" in the Color menu.
+
+You should see that many of the nodes are colored blue, which is keyed "GPU" in
+the legend on the left. Select the CPU run to verify that this is NOT the case.
 
 This page gives more info on using GPUs with ML Engine:
 https://cloud.google.com/ml-engine/docs/using-gpus
