@@ -1,11 +1,10 @@
-# Cloud Tutorial (aka "Cloudssifier")
+# Cloud Tutorial
 
-Simple classifier trained on Cloud! This repository contains a workflow that
-trains a vanilla fully-connected neural network to predict MNIST digits, using
-Tensorflow's SGD optimizer.
+This repository contains a workflow that trains a vanilla fully-connected neural
+network to predict MNIST digits, using Tensorflow's SGD optimizer.
 
 The training code is compatible with Tensorflow 2.0, but the `setup.py` file
-requires TF 1.14.*; this is because AI Platform (as of 10.31.2019) doesn't yet
+requires TF `1.14.*`; this is because AI Platform (as of 10.31.2019) doesn't yet
 support TF2.
 
 ## Local Execution
@@ -249,3 +248,13 @@ python submit.py \
   --project_id $PROJECT_ID \
   --region $REGION
 ```
+
+## Other Tutorials
+
+Cloud platform's
+[Getting Started with Keras](https://cloud.google.com/ml-engine/docs/tensorflow/getting-started-keras)
+and
+[Getting Started with Tensorflow Estimator](https://cloud.google.com/ml-engine/docs/tensorflow/getting-started-training-prediction)
+both have similar structures to this tutorial; all of the supporting Cloud and
+python configuration is the same, so feel free to head to these tutorials next
+to get some different experience with the platform.
