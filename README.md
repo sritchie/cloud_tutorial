@@ -235,13 +235,14 @@ the legend on the left. Select the CPU run to verify that this is NOT the case.
 This page gives more info on using GPUs with ML Engine:
 https://cloud.google.com/ml-engine/docs/using-gpus
 
-## Submit via python api
+## Submit via python api (CURRENTLY BROKEN)
 
 The file `submit.py` contains an example GPU submission using the Python api.
 Run the following, again from `cloud_tutorial`:
 
 ```bash
-pip install google-api-python-client google-cloud-storage
+sudo apt-get install google-cloud-sdk-app-engine-python
+pip install google-api-python-client google-cloud-storage oauth2client
 
 python submit.py \
   --bucket gs://$BUCKET_NAME \
