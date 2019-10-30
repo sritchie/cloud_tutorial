@@ -2,15 +2,26 @@
 
 Simple classifier trained on Cloud! This repository contains a workflow that
 trains a vanilla fully-connected neural network to predict MNIST digits, using
-Tensorflow 2.0's SGD optimizer.
+Tensorflow's SGD optimizer.
 
-## Run locally
+The training code is compatible with Tensorflow 2.0, but the `setup.py` file
+requires TF 1.14.*; this is because AI Platform (as of 10.31.2019) doesn't yet
+support TF2.
 
-Run the following from the `cloud_tutorial` project directory:
+## Local Execution
+
+First we'll all install the project's dependencies and execute a run using your
+system's python installation. Before running the project, create a new
+`virtualenv`.
+
+Once you've activated your `virtualenv`, run the following command from the
+`cloud_tutorial` project directory:
 
 ```bash
-pip install . # Install all dependencies locally
-python cloudssifier/train.py
+pip install .[local] # Install all dependencies locally
+
+JOB_DIR="output-dist"
+python cloudssifier/train.py --job-dir $JOB_DIR
 ```
 
 If you pass in `--help`, you'll see a number of options that you can pass to
@@ -37,9 +48,67 @@ cloudssifier/train.py:
 Try --helpfull to get a list of all flags.
 ```
 
+## Tensorflow 2.0
+
+If you want to try executing this code with Tensorflow 2.0, switch over to the
+TF2 version of the installation and try running the code again:
+
+```bash
+pip install .[tf2]
+python cloudssifier/train.py --job-dir $JOB_DIR
+```
+
+The output should be the same. When you're done, switch back to the tf1
+dependencies to continue with the tutorial:
+
+```bash
+pip install .[local]
+```
+
+## GCloud Local Mode
+
+The next step up is to use the gcloud command line interface to run the job
+locally. I'm not sure that this gains you much in the vanilla case - for
+distributed training tasks I believe you get more feedback on whether or not
+your arguments are correct.
+
+One big benefit is that your job will output the logs and files needed to view
+your model in tensorboard.
+
+Try training your model again (remember, this will only work with Tensorflow
+1.0):
+
+```bash
+JOB_DIR="output-dist"
+
+gcloud ai-platform local train \
+    --job-dir $JOB_DIR \
+    --module-name cloudssifier.train \
+    --package-path cloudssifier
+```
+
+## Local Tensorboard
+
+The above command will generate the logs that Tensorboard needs to show off
+model info and graphs.
+
+To run Tensorboard locally, run the following command in your terminal:
+
+```bash
+tensorboard --logdir $JOB_DIR --host=localhost
+```
+
+This will start a web interface you can visit at <http://localhost:6006/> to see
+details of your model run.
+
+# Running in Cloud
+
+Next we'll run the same model in the cloud, in CPU and in GPU mode.
+
 ## Setup for Cloud
 
-First, follow the instructions
+Before we can train models we'll have to set up the cloud environment with a
+project and credentials. First, follow the instructions
 [here](https://cloud.google.com/ml-engine/docs/tensorflow/getting-started-keras)
 to get set up with:
 
@@ -65,14 +134,18 @@ From the `cloud_tutorial` directory, run the following command:
 DATA_PATH="gs://$BUCKET_NAME/data/mnist.npz" bash -c 'gsutil cp data/mnist.npz $DATA_PATH'
 ```
 
-For the GPU jobs you will need to make sure you have quota in `$REGION`. The
-examples below execute with P100 GPUs.
+You'll only have to do this a single time to stage the data for every subsequent
+run.
 
 ## Submit via command line
 
 This example submits the model training job to AI Platform, where it will
 execute using CPUs. More more info on the command's arguments, see this
 [AI platform page](https://cloud.google.com/sdk/gcloud/reference/ai-platform/jobs/submit/training).
+
+This page gives more detail on job submission via the command line and via a
+python programmatic interface, which we'll cover in the final example.
+https://cloud.google.com/ml-engine/docs/training-jobs#formatting_your_configuration_parameters
 
 From the `cloud_tutorial` directory, run:
 
@@ -84,10 +157,13 @@ gcloud ai-platform jobs submit training $JOB_NAME \
   --job-dir $JOB_DIR \
   --staging-bucket gs://$BUCKET_NAME \
   --module-name cloudssifier.train \
-  --package-path cloudssifier/ \
+  --package-path cloudssifier \
   --region $REGION \
+  --runtime-version 1.14 \
+  --python-version 3.5 \
   -- \
-  --data_path=$DATA_PATH
+  --data_path=$DATA_PATH \
+  --job_name=$JOB_NAME
 ```
 
 You'll be able to see your job running at the
@@ -98,12 +174,28 @@ the logs directly to the terminal by running:
 gcloud ai-platform jobs stream-logs $JOB_NAME
 ```
 
+## Cloud Tensorboard
+
+Your local Tensorboard instance can see logs written to your bucket by Cloud.
+Start tensorboard at the command line like you did before:
+
+```bash
+tensorboard --logdir $JOB_DIR --host=localhost
+```
+
+The page will look roughly the same, of course, but under the "TOGGLE ALL RUNS"
+button on the bottom left you'll see a `gs://` prefix on the log directory.
+Proof achieved!
+
 ## Submit a GPU job
 
-To submit a GPU job:
+The GPU training code is the same - the only difference is the cloud environment
+in which the job executes.
 
-1.  delete tensorflow from the `REQUIRED_PACKAGES` line in `setup.py`
-2.  Run the following command from the `cloud_tutorial` root:
+For the GPU job you will need to make sure you have quota in `$REGION`. The
+following example executes with P100 GPUs.
+
+To submit a GPU job, run the following command from the `cloud_tutorial` root:
 
 ```bash
 JOB_NAME="MNIST_training_GPU_${USER}_$(date +%Y%m%d_%H%M%S)"
@@ -117,7 +209,7 @@ gcloud ai-platform jobs submit training $JOB_NAME \
   --region $REGION\
   --scale-tier custom \
   --master-machine-type standard_p100 \
-  --runtime-version 1.12 \
+  --runtime-version 1.14 \
   --python-version 3.5 \
   -- \
   --data_path=$DATA_PATH
@@ -125,12 +217,17 @@ gcloud ai-platform jobs submit training $JOB_NAME \
 gcloud ai-platform jobs stream-logs $JOB_NAME
 ```
 
+This page gives more info on using GPUs with ML Engine:
+https://cloud.google.com/ml-engine/docs/using-gpus
+
 ## Submit via python api
 
 The file `submit.py` contains an example GPU submission using the Python api.
 Run the following, again from `cloud_tutorial`:
 
 ```bash
+pip install google-api-python-client google-cloud-storage
+
 python submit.py \
   --bucket gs://$BUCKET_NAME \
   --project_id $PROJECT_ID \

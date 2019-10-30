@@ -9,6 +9,8 @@ from absl import flags
 from absl import logging
 
 import numpy as np
+import os
+import time
 
 import tensorflow as tf
 import tensorflow.compat.v1 as tf_old
@@ -23,10 +25,18 @@ FLAGS = flags.FLAGS
 
 default_data_path = 'data/mnist.npz'
 
+
+def default_model_name():
+  """Returns a model name generated using the current date and timestamp.
+  """
+  return time.strftime("%Y%m%d-%H%M%S")
+
+
 flags.DEFINE_integer('epochs', 10, 'number of training epochs.')
 flags.DEFINE_integer('batch_size', 64, 'training batch size.')
 flags.DEFINE_string('data_path', default_data_path, 'path to mnist npz file.')
 flags.DEFINE_string('job-dir', '', 'Catch job directory passed by cloud.')
+flags.DEFINE_string('job_name', default_model_name(), 'Name of model.')
 
 
 def get_mnist(data_path):
@@ -101,15 +111,35 @@ def train_and_validate():
   EPOCHS = FLAGS.epochs
   BATCH_SIZE = FLAGS.batch_size
   DATA_PATH = FLAGS.data_path
+  JOB_NAME = FLAGS.job_name
+
+  # You can also access flags as attrs; we do this here because dashes aren't
+  # valid variable name characters.
+  JOB_DIR = FLAGS['job-dir'].value
 
   (x_train, y_train), (x_test, y_test) = get_mnist(DATA_PATH)
 
   model = get_model()
 
-  model.fit(x=x_train, y=y_train, batch_size=BATCH_SIZE, epochs=EPOCHS)
+  # Setup TensorBoard callback. TODO - get a better structure here for actually
+  # pushing
+  tensorboard_path = os.path.join(JOB_DIR, 'keras_tensorboard', JOB_NAME)
+  tensorboard_cb = tf.keras.callbacks.TensorBoard(tensorboard_path,
+                                                  histogram_freq=1)
 
+  model.fit(x=x_train,
+            y=y_train,
+            batch_size=BATCH_SIZE,
+            epochs=EPOCHS,
+            callbacks=[tensorboard_cb])
+
+  # Save the model.
+  export_path = os.path.join(JOB_DIR, 'keras_export', JOB_NAME)
+  tf.contrib.saved_model.save_keras_model(model, export_path)
+  print('Model exported to: {}'.format(export_path))
+
+  # Run validation.
   logging.info('Validating model.')
-
   train_preds = np.argmax(model(x_train).numpy(), axis=1)
   train_labels = np.argmax(y_train, axis=1)
   train_acc = np.mean(train_preds == train_labels)
@@ -118,6 +148,7 @@ def train_and_validate():
   test_labels = np.argmax(y_test, axis=1)
   test_acc = np.mean(test_preds == test_labels)
 
+  # Report validation.
   print('Train acc: %f, Test acc: %f' % (train_acc, test_acc))
 
 
@@ -127,6 +158,8 @@ def main(argv):
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
 
+  # This is on by default in TF 2.0.
+  tf_old.enable_eager_execution()
   train_and_validate()
 
 
