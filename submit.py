@@ -81,7 +81,7 @@ def submit_job(package_uris):
 
   training_inputs = {
       'packageUris': PACKAGE_URIS,
-      'pythonModule': 'cloudssifier.train',
+      'pythonModule': 'trainer.train',
       'args': ['--data_path', DATA_PATH],
       'region': REGION,
       'jobDir': JOB_DIR,

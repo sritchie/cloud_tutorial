@@ -1,0 +1,41 @@
+#### FOR THIS TO BE THE SAME JOB, DOCKERFILE SHOULD COPY 'PACKAGE' AND EXECUTE PACKAGE/RUN.PY
+#### Cloud configuration stuff
+region: 'us-central1'
+bucket_id: 'blueshift-playground'
+project_id: 'blueshift-playground'
+
+### pid is the parameter we are distributing. 
+### [OPTIONAL] without pid it just does a fixed run.
+#pid: lr
+
+
+### MAYBE WANT TO SPECIFY A BUCKET TO READ DATASET 
+datasets_flag: '--datasets_dir=gs://blueshift-playground/datasets'
+
+## DOCKER CONFIGURATION 
+docker_tag: "gcr.io/blueshift-playground/docker"
+DOCKERFILE: Dockerfile
+DOCKERFILEGPU: DockerfileGPU
+
+### if one is not using docker, these are the arguments that have to be sent. this 
+setup_loc: mypackage ### Relative location of setup file
+module: 'mypackage.run' ### name of the module to execute, the arguments are specified through config.yaml or --args
+runtime_version: '1.12' ### look at runtime needed
+pythonVersion: '3.5' ## python version
+
+### A config.yaml file also has uses_metaconfig: to refer to the general setup. There is also the posibility of sending a special flag in the last job via config[ special_last ].
+
+### THIS NORMALLY GOES ON CONFIG.yaml , SINCE IT IS EXPERIMENT SPECIFIC
+### WILL SEND A JOB WITH --lr_list=1,2,3, --lr_list=4,5,6 respectively 
+### Any other arguments here will also be sent to the script to be executed. 
+#hyperlr: 'list'
+#lr_list: [1,2,3,4,5,6]
+#numjobs: 2
+
+
+
+
+
+
+
+
